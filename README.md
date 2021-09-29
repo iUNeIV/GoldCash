@@ -22,25 +22,15 @@ Investors and miners are welcome to join the ever-growing friendly community bui
 
 ## Block halving explained:
 
-https://www.goldcashcoin.co.uk/halvingschedule.html
-
-# Get Mining
-One Click CPU Miner:https://www.goldcashcoin.co.uk/GoldCashGUIMiner.zip
+https://www.gold-cash.org?Proof-of-Work.html
 
 # Mining pools
-Rplant:https://pool.rplant.xyz/
-
-Zwembad:http://zwembad.zapto.org/
-
-Gold Cash Pool (0% fee):https://goldcash-pool.de/
-
-GPUHOT:https://gpuhot.com/
+[Official] EU GoldCash.club : https://pool.gold-cash.club/
 
 Pool list:https://miningpoolstats.stream/goldcash
 
 
 # Exchange
-Altmarket:https://altmarkets.io/trading/goldbtc
 
 # Block explorer
 
@@ -53,6 +43,7 @@ Link | Description
 Gold Cash is open source software developed under [**MIT license**](./LICENSE).
 
 # Contact info and links
+
 CoinGecko:https://www.coingecko.com/en/coins/gold-cash
 
 CoinPaprika:https://coinpaprika.com/coin/gold-gold-cash/
@@ -63,25 +54,3 @@ CoinPaprika:https://coinpaprika.com/coin/gold-gold-cash/
 - [**Gold Cash on Twitter**](https://twitter.com/GOLD_Cash_Coin)
 - [**Gold Cash Discord server**](https://discord.gg/4Ksenhe)
 - [**Gold Cash Telegram chat**](https://t.me/joinchat/Hz5vPxZKgv2kGzsFBizldw)
-
-
-**Mining tools:**
-- [**CPU Miner**](https://github.com/JayDDee/cpuminer-opt)
-
-
-
-**Donation:**
-
-**Gold Cash:** | [**GU4PRHU9dGm6rqYPDayhbQ4iUbN7doxHkz**]
-
-**Bitcoin:** | [**bc1qe534455v07jqqus6kqyzxdd2js8fts2x9nuypl**]
-
-**Bitcoin Cash:** | [**qr79s0gjwp45v4tadj28qw063hfuhj9y6clc50rytx**]
-
-**Litecoin:** | [**ltc1qfty2egscc7vm078w9r7kt6r58c6mkgvzrulnwm**]
-
-**Dash:** | [**XeewoX71LCGFbaArtfzLSGLow7j8Kw7utz**]
-
-**Zcash:** | [**t1QrQAtseQPK4PbFVcxvQsY7tCyv3D6y1bj**]
-
-**Dogecoin:** | [**D99zktrWbzz7nu9MjLHHkBnu1NbtdJg3Nz**]
