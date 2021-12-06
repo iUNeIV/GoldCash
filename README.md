@@ -23,13 +23,14 @@ Pool list : https://miningpoolstats.stream/goldcash
 
 # Exchange
 https://c-patex.com/markets/goldbtc
+
 https://c-patex.com/markets/goldltc
 
 # Block explorer
 
 Link | Description
 ---- | -----------
-**http://goldcashblockexplorer.co.uk/** | Official Gold Cash Block Explorer
+**http://explorer.goldcashcrypto.co.uk/** | Official Gold Cash Block Explorer
 
 # License
 
