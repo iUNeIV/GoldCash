@@ -15,17 +15,15 @@ Investors and miners are welcome to join the ever-growing friendly community bui
 **Difficulty retarget:** | Every block (DarkGravityWave ver. 3)
 **Premine:** | 5,000 GOLD
 
-## Block halving explained:
-
-https://www.gold-cash.org?Proof-of-Work.html
-
 # Mining pools
-[Official] EU GoldCash.club : https://pool.gold-cash.club/
+[Official] EU GoldCash.club : https://gold-cash.xyz/
 
-Pool list:https://miningpoolstats.stream/goldcash
+Pool list : https://miningpoolstats.stream/goldcash
 
 
 # Exchange
+https://c-patex.com/markets/goldbtc
+https://c-patex.com/markets/goldltc
 
 # Block explorer
 
@@ -39,9 +37,9 @@ Gold Cash is open source software developed under [**MIT license**](./LICENSE).
 
 # Contact info and links
 
-CoinGecko:https://www.coingecko.com/en/coins/gold-cash
+CoinGecko: https://www.coingecko.com/en/coins/gold-cash
 
-CoinPaprika:https://coinpaprika.com/coin/gold-gold-cash/
+CoinPaprika: https://coinpaprika.com/coin/gold-gold-cash/
 
 
 **Community:**
