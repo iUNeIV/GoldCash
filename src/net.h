@@ -285,6 +285,8 @@ public:
 
     unsigned int GetReceiveFloodSize() const;
 
+    void SetMaxConnections(int newMaxConnections);
+
     void WakeMessageHandler();
 private:
     struct ListenSocket {
@@ -314,6 +316,8 @@ private:
     bool IsWhitelistedRange(const CNetAddr &addr);
 
     void DeleteNode(CNode* pnode);
+    void DisconnectUnusedNodes();
+    void DeleteDisconnectedNodes();
 
     NodeId GetNewNodeId();
 
@@ -338,8 +342,8 @@ private:
     // Network usage totals
     CCriticalSection cs_totalBytesRecv;
     CCriticalSection cs_totalBytesSent;
-    uint64_t nTotalBytesRecv;
-    uint64_t nTotalBytesSent;
+    uint64_t nTotalBytesRecv = 0;
+    uint64_t nTotalBytesSent = 0;
 
     // outbound limit & stats
     uint64_t nMaxOutboundTotalBytesSentInCycle;
@@ -509,6 +513,8 @@ public:
     double dMinPing;
     std::string addrLocal;
     CAddress addr;
+    uint64_t nProcessedAddrs;
+    uint64_t nRatelimitedAddrs;
 };
 
 
@@ -636,6 +642,15 @@ public:
     std::set<uint256> setKnown;
     int64_t nNextAddrSend;
     int64_t nNextLocalAddrSend;
+
+
+    /** Number of addresses that can be processed from this peer. */
+    double nAddrTokenBucket;
+    /** When nAddrTokenBucket was last updated, in microseconds */
+    int64_t nAddrTokenTimestamp;
+
+    std::atomic<uint64_t> nProcessedAddrs;
+    std::atomic<uint64_t> nRatelimitedAddrs;
 
     // inventory based relay
     CRollingBloomFilter filterInventoryKnown;

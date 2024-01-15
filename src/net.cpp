@@ -657,6 +657,9 @@ void CNode::copyStats(CNodeStats &stats)
     }
     X(fWhitelisted);
 
+    X(nProcessedAddrs);
+    X(nRatelimitedAddrs);
+
     // It is common for nodes with good ping times to suddenly become lagged,
     // due to a new block arriving or other large transfer.
     // Merely reporting pingtime might fool the caller into thinking the node was still responsive,
@@ -1104,6 +1107,56 @@ void CConnman::AcceptConnection(const ListenSocket& hListenSocket) {
     }
 }
 
+void CConnman::DisconnectUnusedNodes()
+{
+    LOCK(cs_vNodes);
+    // Disconnect unused nodes
+    std::vector<CNode*> vNodesCopy = vNodes;
+    BOOST_FOREACH(CNode* pnode, vNodesCopy)
+    {
+        if (pnode->fDisconnect)
+        {
+            // remove from vNodes
+            vNodes.erase(remove(vNodes.begin(), vNodes.end(), pnode), vNodes.end());
+
+            // release outbound grant (if any)
+            pnode->grantOutbound.Release();
+
+            // close socket and cleanup
+            pnode->CloseSocketDisconnect();
+
+            // hold in disconnected pool until all refs are released
+            pnode->Release();
+            vNodesDisconnected.push_back(pnode);
+        }
+    }
+}
+
+void CConnman::DeleteDisconnectedNodes()
+{
+    std::list<CNode*> vNodesDisconnectedCopy = vNodesDisconnected;
+    BOOST_FOREACH(CNode* pnode, vNodesDisconnectedCopy)
+    {
+        // wait until threads are done using it
+        if (pnode->GetRefCount() <= 0) {
+            bool fDelete = false;
+            {
+                TRY_LOCK(pnode->cs_inventory, lockInv);
+                if (lockInv) {
+                    TRY_LOCK(pnode->cs_vSend, lockSend);
+                    if (lockSend) {
+                        fDelete = true;
+                    }
+                }
+            }
+            if (fDelete) {
+                vNodesDisconnected.remove(pnode);
+                DeleteNode(pnode);
+            }
+        }
+    }
+}
+
 void CConnman::ThreadSocketHandler()
 {
     unsigned int nPrevNodeCount = 0;
@@ -1112,53 +1165,8 @@ void CConnman::ThreadSocketHandler()
         //
         // Disconnect nodes
         //
-        {
-            LOCK(cs_vNodes);
-            // Disconnect unused nodes
-            std::vector<CNode*> vNodesCopy = vNodes;
-            BOOST_FOREACH(CNode* pnode, vNodesCopy)
-            {
-                if (pnode->fDisconnect)
-                {
-                    // remove from vNodes
-                    vNodes.erase(remove(vNodes.begin(), vNodes.end(), pnode), vNodes.end());
-
-                    // release outbound grant (if any)
-                    pnode->grantOutbound.Release();
-
-                    // close socket and cleanup
-                    pnode->CloseSocketDisconnect();
-
-                    // hold in disconnected pool until all refs are released
-                    pnode->Release();
-                    vNodesDisconnected.push_back(pnode);
-                }
-            }
-        }
-        {
-            // Delete disconnected nodes
-            std::list<CNode*> vNodesDisconnectedCopy = vNodesDisconnected;
-            BOOST_FOREACH(CNode* pnode, vNodesDisconnectedCopy)
-            {
-                // wait until threads are done using it
-                if (pnode->GetRefCount() <= 0) {
-                    bool fDelete = false;
-                    {
-                        TRY_LOCK(pnode->cs_inventory, lockInv);
-                        if (lockInv) {
-                            TRY_LOCK(pnode->cs_vSend, lockSend);
-                            if (lockSend) {
-                                fDelete = true;
-                            }
-                        }
-                    }
-                    if (fDelete) {
-                        vNodesDisconnected.remove(pnode);
-                        DeleteNode(pnode);
-                    }
-                }
-            }
-        }
+        DisconnectUnusedNodes();
+        DeleteDisconnectedNodes();
         size_t vNodesSize;
         {
             LOCK(cs_vNodes);
@@ -1395,12 +1403,28 @@ void CConnman::ThreadSocketHandler()
                 }
             }
         }
+        //
+        // Reduce number of connections, if needed
+        //
+        if (vNodesCopy.size() > (size_t)nMaxConnections)
+        {
+            LogPrintf("%s: attempting to reduce connections: max=%u current=%u", __func__, vNodesCopy.size(), nMaxConnections);
+            DisconnectUnusedNodes();
+            DeleteDisconnectedNodes();
+            AttemptToEvictConnection();
+        }
+
         {
             LOCK(cs_vNodes);
             BOOST_FOREACH(CNode* pnode, vNodesCopy)
                 pnode->Release();
         }
     }
+}
+
+void CConnman::SetMaxConnections(int newMaxConnections)
+{
+    nMaxConnections = newMaxConnections;
 }
 
 void CConnman::WakeMessageHandler()
@@ -2214,8 +2238,6 @@ NodeId CConnman::GetNewNodeId()
 
 bool CConnman::Start(CScheduler& scheduler, std::string& strNodeError, Options connOptions)
 {
-    nTotalBytesRecv = 0;
-    nTotalBytesSent = 0;
     nMaxOutboundTotalBytesSentInCycle = 0;
     nMaxOutboundCycleStartTime = 0;
 
@@ -2448,6 +2470,13 @@ std::vector<CAddress> CConnman::GetAddresses()
 bool CConnman::AddNode(const std::string& strNode)
 {
     LOCK(cs_vAddedNodes);
+
+    // We only allow 100x the amount of total connections, to protect against
+    // script errors that fill up memory of the node with addresses
+    if (vAddedNodes.size() >= MAX_ADDNODE_CONNECTIONS * 100) {
+      return false;
+    }
+    
     for(std::vector<std::string>::const_iterator it = vAddedNodes.begin(); it != vAddedNodes.end(); ++it) {
         if (strNode == *it)
             return false;
@@ -2684,6 +2713,10 @@ CNode::CNode(NodeId idIn, ServiceFlags nLocalServicesIn, int nMyStartingHeightIn
     fGetAddr = false;
     nNextLocalAddrSend = 0;
     nNextAddrSend = 0;
+    nAddrTokenBucket = 1; // initialize to 1 to allow self-announcement
+    nAddrTokenTimestamp = GetTimeMicros();
+    nProcessedAddrs = 0;
+    nRatelimitedAddrs = 0;    
     nNextInvSend = 0;
     fRelayTxes = false;
     fSentAddr = false;

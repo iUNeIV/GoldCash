@@ -1005,8 +1005,12 @@ UniValue verifychain(const JSONRPCRequest& request)
 
     if (request.params.size() > 0)
         nCheckLevel = request.params[0].get_int();
+    if (nCheckLevel < 0 || nCheckLevel > 4)
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Error: checklevel must be >= 0 and <= 4");
     if (request.params.size() > 1)
         nCheckDepth = request.params[1].get_int();
+    if (nCheckDepth < 0)
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Error: nblocks must be >= 0");
 
     return CVerifyDB().VerifyDB(Params(), pcoinsTip, nCheckLevel, nCheckDepth);
 }
