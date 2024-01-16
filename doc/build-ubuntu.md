@@ -5,7 +5,7 @@ sudo apt-get update && sudo apt-get -y upgrade
 sudo apt-get -y install git build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils libboost-all-dev libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler libqrencode-dev
 git clone https://github.com/goldcash/goldcash.git
 cd goldcash
-./contrib/instal_db5.sh `pwd`
+./contrib/install_db5.sh `pwd`
 ```
 copy the last two instructions after running the install_db5.sh script for later
 ```sh
