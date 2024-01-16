@@ -44,6 +44,36 @@ UniValue getconnectioncount(const JSONRPCRequest& request)
     return (int)g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL);
 }
 
+UniValue setmaxconnections(const JSONRPCRequest& request)
+{
+    int newMaxCount = 0;
+
+    if (request.fHelp || request.params.size() != 1)
+        throw runtime_error(
+            "setmaxconnections\n"
+            "\nSets the maximum number of connections to other nodes.\n"
+            "\nArguments:\n"
+            "1. \"maxconnectioncount\"     (numeric, required) The new maximum connection count (must be >= 0)\n"
+            "\nResult:\n"
+            "n          (boolean) True or false connection count\n"
+            "\nExamples:\n"
+            + HelpExampleCli("setmaxconnections", "20")
+            + HelpExampleRpc("setmaxconnections", "0")
+        );
+    else
+        newMaxCount = request.params[0].get_int();
+
+    if (newMaxCount < 0)
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Error: maxconnectioncount must be >= 0");
+
+    if(!g_connman)
+        throw JSONRPCError(RPC_CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
+
+    g_connman->SetMaxConnections(newMaxCount);
+
+    return true;
+}
+
 UniValue ping(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 0)
@@ -102,6 +132,8 @@ UniValue getpeerinfo(const JSONRPCRequest& request)
             "       n,                        (numeric) The heights of blocks we're currently asking from this peer\n"
             "       ...\n"
             "    ],\n"
+            "    \"addr_processed\": n,       (numeric) The total number of addresses processed, excluding those dropped due to rate limiting\n"
+            "    \"addr_rate_limited\": n,    (numeric) The total number of addresses dropped due to rate limiting\n"
             "    \"whitelisted\": true|false, (boolean) Whether the peer is whitelisted\n"					
             "    \"bytessent_per_msg\": {\n"
             "       \"addr\": n,              (numeric) The total bytes sent aggregated by message type\n"
@@ -167,6 +199,8 @@ UniValue getpeerinfo(const JSONRPCRequest& request)
             }
             obj.push_back(Pair("inflight", heights));
         }
+        obj.pushKV("addr_processed", stats.nProcessedAddrs);
+        obj.pushKV("addr_rate_limited", stats.nRatelimitedAddrs);
         obj.push_back(Pair("whitelisted", stats.fWhitelisted));
 
         UniValue sendPerMsgCmd(UniValue::VOBJ);
@@ -213,6 +247,11 @@ UniValue addnode(const JSONRPCRequest& request)
 
     string strNode = request.params[0].get_str();
 
+
+    if (strNode.size() > 256) {
+      throw JSONRPCError(RPC_CLIENT_NODE_ADDRESS_INVALID, "Error: Node address is invalid");
+    }
+
     if (strCommand == "onetry")
     {
         CAddress addr;
@@ -223,7 +262,7 @@ UniValue addnode(const JSONRPCRequest& request)
     if (strCommand == "add")
     {
         if(!g_connman->AddNode(strNode))
-            throw JSONRPCError(RPC_CLIENT_NODE_ALREADY_ADDED, "Error: Node already added");
+            throw JSONRPCError(RPC_CLIENT_NODE_ALREADY_ADDED, "Error: Unable to add node");
     }
     else if(strCommand == "remove")
     {
@@ -606,6 +645,7 @@ static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         okSafeMode
   //  --------------------- ------------------------  -----------------------  ----------
     { "network",            "getconnectioncount",     &getconnectioncount,     true,  {} },
+    { "network",            "setmaxconnections",      &setmaxconnections,      true,  {"newconnectioncount"} },
     { "network",            "ping",                   &ping,                   true,  {} },
     { "network",            "getpeerinfo",            &getpeerinfo,            true,  {} },
     { "network",            "addnode",                &addnode,                true,  {"node","command"} },

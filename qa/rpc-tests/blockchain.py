@@ -45,6 +45,7 @@ class BlockchainTest(BitcoinTestFramework):
     def run_test(self):
         self._test_gettxoutsetinfo()
         self._test_getblockheader()
+        self._test_verifychain_args()
         self.nodes[0].verifychain(4, 0)
 
     def _test_gettxoutsetinfo(self):
@@ -84,6 +85,33 @@ class BlockchainTest(BitcoinTestFramework):
         assert isinstance(header['version'], int)
         assert isinstance(int(header['versionHex'], 16), int)
         assert isinstance(header['difficulty'], Decimal)
+
+    def _test_verifychain_args(self):
+        node = self.nodes[0]
+
+        try:
+            node.verifychain(-1)
+            raise AssertionError("Must check for validity of checklevel parameter")
+        except JSONRPCException as e:
+            assert("Error: checklevel must be >= 0 and <= 4" in e.error["message"])
+
+        try:
+            node.verifychain(5)
+            raise AssertionError("Must check for validity of checklevel parameter")
+        except JSONRPCException as e:
+            assert("Error: checklevel must be >= 0 and <= 4" in e.error["message"])
+
+        try:
+            node.verifychain(0, -100)
+            raise AssertionError("Must check for validity of nblocks parameter")
+        except JSONRPCException as e:
+            assert("Error: nblocks must be >= 0" in e.error["message"])
+
+        try:
+            node.verifychain(0, -1000)
+            raise AssertionError("Must check for validity of nblocks parameter")
+        except JSONRPCException as e:
+            assert("Error: nblocks must be >= 0" in e.error["message"])
 
 if __name__ == '__main__':
     BlockchainTest().main()
